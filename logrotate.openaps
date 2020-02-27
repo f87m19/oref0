@@ -17,7 +17,7 @@
 /var/log/openaps/*.log {
   rotate 30
   daily
-  size 5M
+  size 10M
   compress
   delaycompress
   missingok

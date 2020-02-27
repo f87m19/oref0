@@ -1,19 +1,13 @@
-#!/usr/bin/env bash
-
-source $(dirname $0)/oref0-bash-common-functions.sh || (echo "ERROR: Failed to run oref0-bash-common-functions.sh. Is oref0 correctly installed?"; exit 1)
+#!/bin/bash
 
 export GENERATE=false
 export FILE=$1
 export FILE2=$2
 export COMMAND=$3
 
-usage "$@" <<EOT
-Usage: $self <target report> <age-check report>
-EOT
-
 if test ! -n "$FILE"; then
-  print_usage
-  exit 1
+  echo "Usage: oref0-crun <target report> <age-check report>"
+  exit
 fi
 
 if test ! -f $FILE; then

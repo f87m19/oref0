@@ -1,13 +1,20 @@
-#!/usr/bin/env bash -eu
+#!/bin/bash -eu
 
 # Author: Ben West @bewest
 
 # Written for decocare v0.0.17.
+self=$(basename $0)
+OUTPUT=/dev/fd/1
+if [[ "${1-}" == "-f" ]] ; then
+shift
+OUTPUT=$1
+shift
+fi
+OPERATION=${1-help}
+export OPERATION
 
-source $(dirname $0)/oref0-bash-common-functions.sh || (echo "ERROR: Failed to run oref0-bash-common-functions.sh. Is oref0 correctly installed?"; exit 1)
-
-
-usage "$@" <<EOF
+function print_help ( ) {
+  cat <<EOF
 Usage: $self [{scan,diagnose,help},...]
 
     scan      - Print the local location of a plugged in stick.
@@ -23,15 +30,7 @@ Usage: $self [{scan,diagnose,help},...]
     fail      - Always return a failing exit code.
     help      - This message.
 EOF
-
-OUTPUT=/dev/fd/1
-if [[ "${1-}" == "-f" ]] ; then
-    shift
-    OUTPUT=$1
-    shift
-fi
-OPERATION=${1-help}
-export OPERATION
+}
 
 function print_fail ( ) {
   cat <<EOF
@@ -109,6 +108,9 @@ case $OPERATION in
   fail)
     print_fail $*
     exit 1
+    ;;
+  *|help|--help|-h)
+    print_help
     ;;
   esac
 )

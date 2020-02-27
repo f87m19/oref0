@@ -1,19 +1,21 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-source $(dirname $0)/oref0-bash-common-functions.sh || (echo "ERROR: Failed to run oref0-bash-common-functions.sh. Is oref0 correctly installed?"; exit 1)
+self=$(basename $0)
 
-usage "$@" <<EOF
+function usage ( ) {
+cat <<EOF
 Usage: $self --find <NIGHTSCOUT_HOST> - No-op version, find out what delete would do.
 $self --list <NIGHTSCOUT_HOST> - list duplicate count per created_at
 $self delete <NIGHTSCOUT_HOST> - Delete duplicate entries from ${NIGHTSCOUT_HOST-<NIGHTSCOUT_HOST>}
 EOF
+}
 
 function fetch ( ) {
   curl --compressed -s -g $ENDPOINT.json
 }
 
 function flatten ( ) {
-  jq -r '.created_at' | uniq -c
+  json -a created_at | uniq -c
 }
 
 
@@ -36,17 +38,16 @@ curl -X DELETE -H "API-SECRET: $API_SECRET" ${ENDPOINT}/$tid
 
 function list ( ) {
 NIGHTSCOUT_HOST=$1
-  test -z "$NIGHTSCOUT_HOST" && echo NIGHTSCOUT_HOST undefined. && print_usage && exit 1
+  test -z "$NIGHTSCOUT_HOST" && echo NIGHTSCOUT_HOST undefined. && usage && exit 1
 ENDPOINT=${NIGHTSCOUT_HOST}/api/v1/treatments
 
 export NIGHTSCOUT_HOST ENDPOINT
 fetch | flatten | while read count date; do
   test $count -gt 1 && echo "{}" \
-    | jq '[ .[]
-      | .count = '$count'
-      | .date = '$date'
-      | .created_at = '$date' ]'
-done | jq '.[]' | jq -s
+    | json -e "this.count = $count" \
+    -e "this.date = '$date'" \
+    -e "this.created_at = '$date'"
+done | json -g
 }
 
 function main ( ) {
@@ -57,13 +58,13 @@ ENDPOINT=${NIGHTSCOUT_HOST}/api/v1/treatments
 if [[ -z "$NIGHTSCOUT_HOST" || -z "$NIGHTSCOUT_HOST" ]] ; then
   test -z "$NIGHTSCOUT_HOST" && echo NIGHTSCOUT_HOST undefined.
   test -z "$API_SECRET" && echo API_SECRET undefined.
-  print_usage
+  usage
   exit 1;
 fi
 
 export NIGHTSCOUT_HOST ENDPOINT
 fetch | flatten | while read count date; do
-  find_dupes_on $count $date | jq -r '.[] | ._id' | tac \
+  find_dupes_on $count $date | json -a _id | tac \
   | head -n 30 | while read tid line ; do
     echo -n $count' '
     $ACTION $tid
@@ -87,7 +88,7 @@ case "$1" in
     main $2 delete_cmd
     ;;
   *|help|--help|-h)
-    print_usage
+    usage
     exit 1;
     ;;
 esac

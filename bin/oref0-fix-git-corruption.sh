@@ -1,14 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 #
 # Author: Ben West
 #
-
-source $(dirname $0)/oref0-bash-common-functions.sh || (echo "ERROR: Failed to run oref0-bash-common-functions.sh. Is oref0 correctly installed?"; exit 1)
-
-
-usage "$@" <<EOT
-Usage: $self
+#
+<<EOT
 Sometimes openaps instances get corrupted and only produce error
 messages.
 Looking at recent usage in git's ref-log allows us to guess at the last known

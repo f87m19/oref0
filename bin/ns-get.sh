@@ -1,9 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Author: Ben West
 
-source $(dirname $0)/oref0-bash-common-functions.sh || (echo "ERROR: Failed to run oref0-bash-common-functions.sh. Is oref0 correctly installed?"; exit 1)
-
+self=$(basename $0)
 REPORT=${1-entries.json}
 NIGHTSCOUT_HOST=${NIGHTSCOUT_HOST-${2-localhost:1337}}
 QUERY=${3}
@@ -14,12 +13,15 @@ NIGHTSCOUT_FORMAT=${NIGHTSCOUT_FORMAT-jq .}
 test "$NIGHTSCOUT_DEBUG" = "1" && CURL_FLAGS="${CURL_FLAGS} -iv"
 test "$NIGHTSCOUT_DEBUG" = "1" && set -x
 
-usage "$@" <<EOF
+function usage ( ) {
+cat <<EOF
 Usage: $self <entries.json> [NIGHTSCOUT_HOST|localhost:1337] [QUERY] [stdout|-]
 
 $self type <entries.json> <NIGHTSCOUT_HOST|localhost:1337] [QUERY] [stdout|-]
 $self host <NIGHTSCOUT_HOST|localhost:1337> <entries.json> [QUERY] [stdout|-]
+
 EOF
+}
 
 CURL_AUTH=""
 
@@ -32,7 +34,7 @@ if [[ "${API_SECRET}" =~ "token=" ]]; then
   fi
 else
   REPORT_ENDPOINT=$NIGHTSCOUT_HOST/api/v1/${REPORT}'?'${QUERY}
-  CURL_AUTH='-H api-secret:'${API_SECRET}
+  #CURL_AUTH='-H "api-secret: ${API_SECRET}"'
 fi
 
 case $1 in
@@ -53,7 +55,7 @@ case $1 in
     else
       REPORT_ENDPOINT=$NIGHTSCOUT_HOST/api/v1/${REPORT}'?'${QUERY}
     fi
-    test -z "$NIGHTSCOUT_HOST" && print_usage && exit 1;
+    test -z "$NIGHTSCOUT_HOST" && usage && exit 1;
 
     curl -m 30 ${CURL_AUTH} ${CURL_FLAGS} $REPORT_ENDPOINT | $NIGHTSCOUT_FORMAT
 
@@ -63,10 +65,12 @@ case $1 in
     exec $self $*
     ;;
   help|--help|-h)
-    print_usage
+    usage
     ;;
   *)
-    test -z "$NIGHTSCOUT_HOST" && print_usage && exit 1;
+    test -z "$NIGHTSCOUT_HOST" && usage && exit 1;
     curl -m 30 ${CURL_AUTH} ${CURL_FLAGS} $REPORT_ENDPOINT | $NIGHTSCOUT_FORMAT
     ;;
 esac
+
+
